@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum LocationType {
+  STORE
+  WAREHOUSE
+  HQ
+}
+
+enum UserRole {
+  STORE_STAFF
+  STORE_MANAGER
+  WAREHOUSE_STAFF
+  WAREHOUSE_MANAGER
+  HQ_STAFF
+  HQ_ADMIN
+}
+
+enum StockMovementType {
+  INBOUND
+  OUTBOUND
+  TRANSFER
+  ADJUSTMENT
+  POS_SALE
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  PICKING
+  SHIPPED
+  RECEIVED
+  CANCELLED
+}
+
+model Location {
+  id        String       @id @default(cuid())
+  code      String       @unique
+  name      String
+  type      LocationType
+  address   String?
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  users              User[]
+  inventories        Inventory[]
+  ordersFrom         Order[]          @relation("OrderFrom")
+  ordersTo           Order[]          @relation("OrderTo")
+  stockMovementsFrom StockMovement[]  @relation("MovementFrom")
+  stockMovementsTo   StockMovement[]  @relation("MovementTo")
+  posTransactions    PosTransaction[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole
+  locationId   String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  location        Location?       @relation(fields: [locationId], references: [id])
+  ordersRequested Order[]         @relation("OrderRequestedBy")
+  ordersApproved  Order[]         @relation("OrderApprovedBy")
+  stockMovements  StockMovement[]
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  janCode   String   @unique
+  name      String
+  nameKana  String?
+  vintage   Int?
+  producer  String?
+  region    String?
+  grape     String?
+  volume    Int      @default(750)
+  unitPrice Decimal  @db.Decimal(10, 2)
+  costPrice Decimal? @db.Decimal(10, 2)
+  category  String?
+  minStock  Int      @default(5)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventories     Inventory[]
+  orderItems      OrderItem[]
+  stockMovements  StockMovement[]
+  posTransactions PosTransaction[]
+}
+
+model Inventory {
+  id          String   @id @default(cuid())
+  locationId  String
+  productId   String
+  quantity    Int      @default(0)
+  reservedQty Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  location Location @relation(fields: [locationId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@unique([locationId, productId])
+  @@index([locationId])
+  @@index([productId])
+}
+
+model StockMovement {
+  id             String            @id @default(cuid())
+  type           StockMovementType
+  fromLocationId String?
+  toLocationId   String?
+  productId      String
+  quantity       Int
+  referenceNo    String?
+  scannedJan     String?
+  userId         String
+  note           String?
+  createdAt      DateTime          @default(now())
+
+  fromLocation Location? @relation("MovementFrom", fields: [fromLocationId], references: [id])
+  toLocation   Location? @relation("MovementTo", fields: [toLocationId], references: [id])
+  product      Product   @relation(fields: [productId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([productId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNo        String      @unique
+  fromLocationId String
+  toLocationId   String
+  status         OrderStatus @default(DRAFT)
+  requestedById  String
+  approvedById   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  fromLocation Location    @relation("OrderFrom", fields: [fromLocationId], references: [id])
+  toLocation   Location    @relation("OrderTo", fields: [toLocationId], references: [id])
+  requestedBy  User        @relation("OrderRequestedBy", fields: [requestedById], references: [id])
+  approvedBy   User?       @relation("OrderApprovedBy", fields: [approvedById], references: [id])
+  items        OrderItem[]
+
+  @@index([status])
+  @@index([fromLocationId])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+}
+
+model PosTransaction {
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  locationId String
+  productId  String
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  soldAt     DateTime
+  syncedAt   DateTime @default(now())
+
+  location Location @relation(fields: [locationId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@index([locationId, soldAt])
+}

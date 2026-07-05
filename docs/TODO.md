@@ -49,7 +49,7 @@
 
 | # | タスク | Priority | Status |
 |---|--------|----------|--------|
-| 1.2.1 | PostgreSQL (Neon) プロビジョニング | P0 | [ ] |
+| 1.2.1 | Supabase プロジェクト作成 + PostgreSQL 接続設定 | P0 | [ ] |
 | 1.2.2 | Prisma セットアップ | P0 | [ ] |
 | 1.2.3 | スキーマ定義: Location, Product, User | P0 | [ ] |
 | 1.2.4 | スキーマ定義: Inventory, StockMovement | P0 | [ ] |
@@ -261,7 +261,7 @@
 
 | # | タスク | Priority | Status |
 |---|--------|----------|--------|
-| 6.4.1 | 本番環境セットアップ（Vercel Production + Neon Prod） | P0 | [ ] |
+| 6.4.1 | 本番環境セットアップ（Vercel + Supabase Production） | P0 | [ ] |
 | 6.4.2 | 本番データ投入 | P0 | [ ] |
 | 6.4.3 | 操作マニュアル作成（ロール別） | P1 | [ ] |
 | 6.4.4 | UAT（ユーザー受入テスト） | P0 | [ ] |

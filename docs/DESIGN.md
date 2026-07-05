@@ -35,7 +35,7 @@
 | 既存システム | クライアント言及あり（「〜をベースに」） | 既存コード・DB・Excelフォーマットの提供 |
 | POS連携先 | 未指定 | POSメーカー、API/Webhook仕様、同期頻度 |
 | JANスキャン | 未指定 | カメラ（Web Barcode API） vs ハンドスキャナ（キーボード入力） |
-| DB | 未指定 | PostgreSQL + Prisma を推奨（Vercel Postgres / Neon） |
+| DB | Supabase (PostgreSQL) + Prisma | マネージド Postgres、Storage/Realtime 拡張可能 |
 | ユーザー数 | 未指定 | 同時接続数、店舗数、SKU数 |
 
 ---
@@ -65,8 +65,8 @@
               ┌───────────────┼───────────────┐
               │               │               │
         ┌─────▼─────┐   ┌─────▼─────┐   ┌─────▼─────┐
-        │ PostgreSQL│   │ POS System│   │  Vercel   │
-        │  (Neon)   │   │ (Webhook) │   │  Blob     │
+        │ Supabase  │   │ POS System│   │  Vercel   │
+        │ PostgreSQL│   │ (Webhook) │   │  Deploy   │
         └───────────┘   └───────────┘   └───────────┘
 ```
 
@@ -80,7 +80,9 @@
 | UI Components | shadcn/ui + Radix UI | アクセシビリティ、カスタマイズ性 |
 | Grid | TanStack Table + カスタムセル編集 | Excelライク操作 |
 | Barcode | @zxing/browser または html5-qrcode | モバイルJANスキャン |
-| ORM | Prisma | 型安全なDB操作、マイグレーション |
+| ORM | Prisma | 型安全なDB操作、Supabase PostgreSQL 連携 |
+| Database | Supabase (PostgreSQL) | マネージド Postgres、バックアップ、Storage/Realtime |
+| Supabase SDK | @supabase/supabase-js | Storage・Realtime 等（将来拡張） |
 | Auth | NextAuth.js v5 (Auth.js) | ロールベース認可、セッション管理 |
 | Validation | Zod | API入出力・フォームバリデーション |
 | State | React Server Components + SWR | サーバー状態優先、クライアントキャッシュ |
@@ -105,6 +107,7 @@ wine/
 │   └── layout/                 # ロール別レイアウト
 ├── lib/
 │   ├── db/                     # Prisma client
+│   ├── supabase/               # Supabase client (Storage, Realtime)
 │   ├── auth/                   # 認証・認可ヘルパー
 │   ├── services/               # ビジネスロジック
 │   └── validators/             # Zod スキーマ
@@ -461,7 +464,7 @@ POS System                    Wine Platform
 | 可用性 | 99.5% (Vercel SLA) |
 | データ整合性 | 在庫操作はトランザクション + 楽観ロック |
 | セキュリティ | HTTPS, CSRF, ロールガード, 監査ログ |
-| バックアップ | DB日次自動バックアップ (Neon) |
+| バックアップ | Supabase 自動バックアップ（Pro plan） |
 
 ---
 
@@ -488,9 +491,13 @@ POS System                    Wine Platform
 
 **環境変数:**
 ```
-DATABASE_URL=
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=
+DATABASE_URL=          # Supabase pooler (port 6543, pgbouncer=true)
+DIRECT_URL=            # Supabase direct (port 5432, for migrations)
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+AUTH_SECRET=
+AUTH_URL=
 POS_WEBHOOK_SECRET=
 ```
 
