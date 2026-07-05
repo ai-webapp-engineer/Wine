@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation";
-
 import { AppHeader, PageShell, SidebarNav } from "@/components/layout/app-shell";
-import { auth } from "@/lib/auth";
+import { requireRoleLayout } from "@/lib/auth/layout-guard";
 
 const navItems = [
   { href: "/hq", label: "ダッシュボード" },
@@ -13,12 +11,11 @@ const navItems = [
 ];
 
 export default async function HqLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const user = await requireRoleLayout("/hq");
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <AppHeader user={session.user} />
+      <AppHeader user={user} />
       <div className="mx-auto flex min-h-[calc(100vh-57px)] max-w-7xl">
         <SidebarNav items={navItems} />
         <main className="flex-1 p-4 md:p-6">{children}</main>

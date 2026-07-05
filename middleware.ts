@@ -1,34 +1,33 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { auth } from "@/lib/auth";
-import { canAccessPath, getRoleHomePath } from "@/lib/auth/rbac";
+const publicPaths = ["/login"];
 
-const publicPaths = ["/login", "/api/auth"];
+function hasSessionCookie(request: NextRequest): boolean {
+  return Boolean(
+    request.cookies.get("__Secure-authjs.session-token")?.value ??
+      request.cookies.get("authjs.session-token")?.value,
+  );
+}
 
-export default auth((request) => {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));
-  const isApi = pathname.startsWith("/api");
-  const user = request.auth?.user;
+  const isAuthenticated = hasSessionCookie(request);
 
-  if (!user && !isPublic && pathname !== "/") {
+  if (!isAuthenticated && !isPublic && pathname !== "/") {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && pathname === "/login") {
-    return NextResponse.redirect(new URL(getRoleHomePath(user.role), request.url));
-  }
-
-  if (user && !isPublic && !isApi && !canAccessPath(user.role, pathname)) {
-    return NextResponse.redirect(new URL(getRoleHomePath(user.role), request.url));
+  if (isAuthenticated && pathname === "/login") {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

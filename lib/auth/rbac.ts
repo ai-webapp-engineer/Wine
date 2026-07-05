@@ -1,4 +1,4 @@
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/lib/auth/roles";
 
 const STORE_ROLES: UserRole[] = ["STORE_STAFF", "STORE_MANAGER"];
 const WAREHOUSE_ROLES: UserRole[] = ["WAREHOUSE_STAFF", "WAREHOUSE_MANAGER"];
@@ -38,3 +38,5 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   HQ_STAFF: "本部スタッフ",
   HQ_ADMIN: "本部管理者",
 };
+
+export type { UserRole };

@@ -5,8 +5,8 @@ import {
   isStoreRole,
   isWarehouseRole,
 } from "@/lib/auth/rbac";
+import type { UserRole } from "@/lib/auth/roles";
 import type { SessionUser } from "@/lib/auth/types";
-import type { UserRole } from "@prisma/client";
 
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await auth();
