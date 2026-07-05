@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { createOrderAction } from "@/lib/actions/orders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -27,20 +28,15 @@ export function OrderCreateForm({
     setLoading(true);
     setError(null);
 
-    const response = await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        toLocationId,
-        items: rows.filter((row) => row.productId && row.quantity > 0),
-      }),
+    const result = await createOrderAction({
+      toLocationId,
+      items: rows.filter((row) => row.productId && row.quantity > 0),
     });
 
     setLoading(false);
 
-    if (!response.ok) {
-      const data = await response.json();
-      setError(data.error ?? "発注に失敗しました");
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
 
@@ -105,7 +101,7 @@ export function OrderCreateForm({
         >
           行追加
         </Button>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" loading={loading}>
           {loading ? "送信中..." : "発注送信"}
         </Button>
       </div>

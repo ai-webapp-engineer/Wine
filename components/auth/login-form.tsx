@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MSG } from "@/lib/messages/ja";
 
 export function LoginForm() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setError("メールアドレスまたはパスワードが正しくありません");
+      setError(MSG.LOGIN_FAILED);
       return;
     }
 
@@ -59,9 +60,9 @@ export function LoginForm() {
         />
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "ログイン中..." : "ログイン"}
-      </Button>
+        <Button type="submit" className="w-full" loading={loading}>
+          {loading ? "ログイン中..." : "ログイン"}
+        </Button>
     </form>
   );
 }

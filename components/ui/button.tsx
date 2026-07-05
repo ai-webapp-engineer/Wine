@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 const variants = {
   default: "bg-wine-700 text-white hover:bg-wine-800",
@@ -16,23 +17,31 @@ const sizes = {
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: keyof typeof variants;
   size?: keyof typeof sizes;
+  loading?: boolean;
 };
 
 export function Button({
   className,
   variant = "default",
   size = "md",
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-lg font-medium transition disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition disabled:opacity-50",
         variants[variant],
         sizes[size],
         className,
       )}
+      disabled={disabled || loading}
       {...props}
-    />
+    >
+      {loading ? <Spinner size="sm" className="border-white/30 border-t-white" /> : null}
+      {children}
+    </button>
   );
 }

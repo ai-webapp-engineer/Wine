@@ -1,38 +1,53 @@
 import { PageShell } from "@/app/(hq)/hq/layout";
 import { ProductForm } from "@/components/hq/product-form";
-import { db } from "@/lib/db";
+import { DataTable } from "@/components/ui/data-table";
+import { parseTableParams, type TableSearchParams } from "@/lib/pagination";
+import { fetchProductCategories, fetchProductsTable } from "@/lib/services/table-queries";
 import { formatCurrency } from "@/lib/utils";
 
-export default async function HqProductsPage() {
-  const products = await db.product.findMany({ orderBy: { name: "asc" } });
+type Props = {
+  searchParams: Promise<TableSearchParams>;
+};
+
+export default async function HqProductsPage({ searchParams }: Props) {
+  const params = parseTableParams(await searchParams);
+  const [table, categories] = await Promise.all([
+    fetchProductsTable(params),
+    fetchProductCategories(),
+  ]);
 
   return (
     <PageShell title="商品マスタ" description="ワイン商品の登録・編集">
       <ProductForm />
-      <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-stone-50 text-left text-stone-600">
-            <tr>
-              <th className="px-4 py-3">商品名</th>
-              <th className="px-4 py-3">JAN</th>
-              <th className="px-4 py-3">カテゴリ</th>
-              <th className="px-4 py-3">単価</th>
-              <th className="px-4 py-3">最低在庫</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id} className="border-t border-stone-100">
-                <td className="px-4 py-3">{product.name}</td>
-                <td className="px-4 py-3 font-mono text-xs">{product.janCode}</td>
-                <td className="px-4 py-3">{product.category}</td>
-                <td className="px-4 py-3">{formatCurrency(product.unitPrice.toString())}</td>
-                <td className="px-4 py-3">{product.minStock}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        basePath="/hq/products"
+        q={params.q}
+        filter={params.filter}
+        filterLabel="カテゴリ"
+        filterOptions={categories.map((category) => ({ value: category, label: category }))}
+        searchPlaceholder="商品名・JAN・カテゴリで検索"
+        page={table.currentPage}
+        totalPages={table.totalPages}
+        total={table.total}
+        pageSize={params.pageSize}
+        rows={table.rows}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "name", header: "商品名", cell: (row) => row.name },
+          {
+            key: "jan",
+            header: "JAN",
+            cell: (row) => <span className="font-mono text-xs">{row.janCode}</span>,
+          },
+          { key: "category", header: "カテゴリ", cell: (row) => row.category ?? "—" },
+          {
+            key: "price",
+            header: "単価",
+            cell: (row) => formatCurrency(row.unitPrice.toString()),
+          },
+          { key: "minStock", header: "最低在庫", cell: (row) => row.minStock },
+        ]}
+      />
     </PageShell>
   );
 }

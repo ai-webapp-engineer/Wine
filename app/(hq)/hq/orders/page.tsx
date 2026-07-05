@@ -1,38 +1,63 @@
 import { PageShell } from "@/app/(hq)/hq/layout";
 import { Badge } from "@/components/ui/badge";
-import { db } from "@/lib/db";
+import { DataTable } from "@/components/ui/data-table";
+import { parseTableParams, type TableSearchParams } from "@/lib/pagination";
+import { fetchOrdersTable, ORDER_STATUS_LABELS } from "@/lib/services/table-queries";
 import { formatDate } from "@/lib/utils";
 
-export default async function HqOrdersPage() {
-  const orders = await db.order.findMany({
-    include: {
-      fromLocation: true,
-      toLocation: true,
-      items: { include: { product: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+type Props = {
+  searchParams: Promise<TableSearchParams>;
+};
+
+const STATUS_FILTER_OPTIONS = Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+export default async function HqOrdersPage({ searchParams }: Props) {
+  const params = parseTableParams(await searchParams);
+  const table = await fetchOrdersTable({}, params);
 
   return (
     <PageShell title="発注管理" description="全店舗の発注状況">
-      <div className="space-y-3">
-        {orders.map((order) => (
-          <div key={order.id} className="rounded-xl border border-stone-200 bg-white p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{order.orderNo}</p>
-                <p className="text-sm text-stone-500">
-                  {order.fromLocation.name} → {order.toLocation.name} / {formatDate(order.createdAt)}
-                </p>
-              </div>
-              <Badge>{order.status}</Badge>
-            </div>
-            <p className="mt-2 text-sm text-stone-600">
-              {order.items.length} SKU / 合計 {order.items.reduce((sum, item) => sum + item.quantity, 0)} 本
-            </p>
-          </div>
-        ))}
-      </div>
+      <DataTable
+        basePath="/hq/orders"
+        q={params.q}
+        filter={params.filter}
+        filterLabel="ステータス"
+        filterOptions={STATUS_FILTER_OPTIONS}
+        searchPlaceholder="発注番号・店舗・倉庫で検索"
+        page={table.currentPage}
+        totalPages={table.totalPages}
+        total={table.total}
+        pageSize={params.pageSize}
+        rows={table.rows}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "orderNo", header: "発注番号", cell: (row) => row.orderNo },
+          {
+            key: "route",
+            header: "ルート",
+            cell: (row) => `${row.fromLocation.name} → ${row.toLocation.name}`,
+          },
+          {
+            key: "date",
+            header: "日付",
+            cell: (row) => formatDate(row.createdAt),
+          },
+          {
+            key: "status",
+            header: "ステータス",
+            cell: (row) => <Badge>{ORDER_STATUS_LABELS[row.status]}</Badge>,
+          },
+          { key: "sku", header: "SKU数", cell: (row) => row.items.length },
+          {
+            key: "qty",
+            header: "合計数量",
+            cell: (row) => row.items.reduce((sum, item) => sum + item.quantity, 0),
+          },
+        ]}
+      />
     </PageShell>
   );
 }

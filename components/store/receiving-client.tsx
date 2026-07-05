@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { updateOrderStatusAction } from "@/lib/actions/orders";
 import { Button } from "@/components/ui/button";
 
 type ReceivingOrder = {
@@ -15,11 +16,10 @@ export function ReceivingClient({ orders }: { orders: ReceivingOrder[] }) {
   const router = useRouter();
 
   async function confirmReceiving(orderId: string) {
-    await fetch(`/api/orders/${orderId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "RECEIVED" }),
-    });
+    const result = await updateOrderStatusAction(orderId, "RECEIVED");
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
     router.refresh();
   }
 

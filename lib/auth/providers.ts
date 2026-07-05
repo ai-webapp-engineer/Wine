@@ -1,19 +1,14 @@
 import bcrypt from "bcryptjs";
 import Credentials from "next-auth/providers/credentials";
-import { z } from "zod";
 
 import { db } from "@/lib/db";
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+import { loginSchema } from "@/lib/validators";
 
 export const credentialsProvider = Credentials({
   name: "credentials",
   credentials: {
-    email: { label: "Email", type: "email" },
-    password: { label: "Password", type: "password" },
+    email: { label: "メールアドレス", type: "email" },
+    password: { label: "パスワード", type: "password" },
   },
   async authorize(credentials) {
     const parsed = loginSchema.safeParse(credentials);

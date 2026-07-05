@@ -1,40 +1,45 @@
 import { PageShell } from "@/app/(warehouse)/warehouse/layout";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { DataTable } from "@/components/ui/data-table";
+import { requireSessionUser } from "@/lib/auth/session";
+import { parseTableParams, type TableSearchParams } from "@/lib/pagination";
+import { fetchLocationInventoryTable } from "@/lib/services/table-queries";
 
-export default async function WarehouseInventoryPage() {
-  const locationId = (await auth())!.user.locationId!;
+type Props = {
+  searchParams: Promise<TableSearchParams>;
+};
 
-  const inventory = await db.inventory.findMany({
-    where: { locationId },
-    include: { product: true },
-    orderBy: { product: { name: "asc" } },
-  });
+export default async function WarehouseInventoryPage({ searchParams }: Props) {
+  const user = await requireSessionUser();
+  const locationId = user.locationId!;
+  const params = parseTableParams(await searchParams);
+  const table = await fetchLocationInventoryTable(locationId, params);
 
   return (
     <PageShell title="倉庫在庫" description="倉庫SKU別在庫">
-      <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-stone-50 text-left text-stone-600">
-            <tr>
-              <th className="px-4 py-3">商品名</th>
-              <th className="px-4 py-3">JAN</th>
-              <th className="px-4 py-3">在庫</th>
-              <th className="px-4 py-3">引当</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inventory.map((item) => (
-              <tr key={item.id} className="border-t border-stone-100">
-                <td className="px-4 py-3">{item.product.name}</td>
-                <td className="px-4 py-3 font-mono text-xs">{item.product.janCode}</td>
-                <td className="px-4 py-3">{item.quantity}</td>
-                <td className="px-4 py-3">{item.reservedQty}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        basePath="/warehouse/inventory"
+        q={params.q}
+        filter={params.filter}
+        filterLabel="在庫状態"
+        filterOptions={[{ value: "low", label: "最低在庫以下" }]}
+        searchPlaceholder="商品名・JAN・カテゴリで検索"
+        page={table.currentPage}
+        totalPages={table.totalPages}
+        total={table.total}
+        pageSize={params.pageSize}
+        rows={table.rows}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "name", header: "商品名", cell: (row) => row.product.name },
+          {
+            key: "jan",
+            header: "JAN",
+            cell: (row) => <span className="font-mono text-xs">{row.product.janCode}</span>,
+          },
+          { key: "quantity", header: "在庫", cell: (row) => row.quantity },
+          { key: "reserved", header: "引当", cell: (row) => row.reservedQty },
+        ]}
+      />
     </PageShell>
   );
 }

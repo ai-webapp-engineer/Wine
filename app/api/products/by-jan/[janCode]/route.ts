@@ -1,4 +1,5 @@
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { MSG } from "@/lib/messages/ja";
 import { requireSessionUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
@@ -11,7 +12,7 @@ export async function GET(_request: Request, { params }: Params) {
 
     const product = await db.product.findUnique({ where: { janCode } });
     if (!product) {
-      return jsonError("Product not found", 404);
+      return jsonError(MSG.PRODUCT_NOT_FOUND, 404);
     }
 
     return jsonOk(product);

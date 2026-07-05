@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { MSG } from "@/lib/messages/ja";
 import {
   getEffectiveLocationId,
   isHqRole,
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const locationId = getEffectiveLocationId(user, requestedLocationId);
 
     if (!locationId && !isHqRole(user.role)) {
-      return jsonError("locationId is required", 400);
+      return jsonError(MSG.LOCATION_ID_REQUIRED, 400);
     }
 
     const inventory = await db.inventory.findMany({

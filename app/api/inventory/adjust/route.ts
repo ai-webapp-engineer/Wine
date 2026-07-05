@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { MSG } from "@/lib/messages/ja";
 import {
   getEffectiveLocationId,
   requireRole,
@@ -23,7 +24,7 @@ export async function PATCH(request: NextRequest) {
     const locationId = getEffectiveLocationId(user, body.locationId);
 
     if (!locationId || locationId !== body.locationId) {
-      return jsonError("Invalid location", 403);
+      return jsonError(MSG.INVALID_LOCATION, 403);
     }
 
     const inventory = await processInventoryAdjust({

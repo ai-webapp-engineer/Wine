@@ -1,4 +1,6 @@
-import { auth } from "@/lib/auth";
+import { cache } from "react";
+
+import { getSession } from "@/lib/auth/get-session";
 import {
   canAccessPath,
   isHqRole,
@@ -7,16 +9,17 @@ import {
 } from "@/lib/auth/rbac";
 import type { UserRole } from "@/lib/auth/roles";
 import type { SessionUser } from "@/lib/auth/types";
+import { MSG } from "@/lib/messages/ja";
 
-export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await auth();
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const session = await getSession();
   return session?.user ?? null;
-}
+});
 
 export async function requireSessionUser(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error(MSG.UNAUTHORIZED);
   }
   return user;
 }
@@ -24,7 +27,7 @@ export async function requireSessionUser(): Promise<SessionUser> {
 export async function requireRole(roles: UserRole[]): Promise<SessionUser> {
   const user = await requireSessionUser();
   if (!roles.includes(user.role)) {
-    throw new Error("Forbidden");
+    throw new Error(MSG.FORBIDDEN);
   }
   return user;
 }
@@ -32,14 +35,14 @@ export async function requireRole(roles: UserRole[]): Promise<SessionUser> {
 export async function requireLocation(): Promise<SessionUser> {
   const user = await requireSessionUser();
   if (!user.locationId && !isHqRole(user.role)) {
-    throw new Error("Location required");
+    throw new Error(MSG.LOCATION_REQUIRED);
   }
   return user;
 }
 
 export function assertPathAccess(user: SessionUser, pathname: string): void {
   if (!canAccessPath(user.role, pathname)) {
-    throw new Error("Forbidden");
+    throw new Error(MSG.FORBIDDEN);
   }
 }
 

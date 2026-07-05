@@ -1,24 +1,25 @@
 import { AppHeader, PageShell, SidebarNav } from "@/components/layout/app-shell";
 import { requireRoleLayout } from "@/lib/auth/layout-guard";
+import { APP_MAIN_CLASS, APP_SCREEN_CLASS, APP_SHELL_CLASS } from "@/lib/layout";
 
 const navItems = [
-  { href: "/hq", label: "ダッシュボード" },
-  { href: "/hq/products", label: "商品マスタ" },
-  { href: "/hq/locations", label: "拠点マスタ" },
-  { href: "/hq/inventory", label: "全拠点在庫" },
-  { href: "/hq/orders", label: "発注管理" },
-  { href: "/hq/users", label: "ユーザー管理" },
+  { href: "/hq", label: "ダッシュボード", icon: "dashboard" as const },
+  { href: "/hq/products", label: "商品マスタ", icon: "products" as const },
+  { href: "/hq/locations", label: "拠点マスタ", icon: "locations" as const },
+  { href: "/hq/inventory", label: "全拠点在庫", icon: "allInventory" as const },
+  { href: "/hq/orders", label: "発注管理", icon: "orders" as const },
+  { href: "/hq/users", label: "ユーザー管理", icon: "users" as const },
 ];
 
 export default async function HqLayout({ children }: { children: React.ReactNode }) {
   const user = await requireRoleLayout("/hq");
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className={APP_SCREEN_CLASS}>
       <AppHeader user={user} />
-      <div className="mx-auto flex min-h-[calc(100vh-57px)] max-w-7xl">
+      <div className={APP_SHELL_CLASS}>
         <SidebarNav items={navItems} />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className={APP_MAIN_CLASS}>{children}</main>
       </div>
     </div>
   );

@@ -1,17 +1,17 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth/session";
 import { canAccessPath, getRoleHomePath } from "@/lib/auth/rbac";
 
 export async function requireRoleLayout(pathPrefix: "/store" | "/warehouse" | "/hq") {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getSessionUser();
+  if (!user) {
     redirect("/login");
   }
 
-  if (!canAccessPath(session.user.role, pathPrefix)) {
-    redirect(getRoleHomePath(session.user.role));
+  if (!canAccessPath(user.role, pathPrefix)) {
+    redirect(getRoleHomePath(user.role));
   }
 
-  return session.user;
+  return user;
 }

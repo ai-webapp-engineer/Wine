@@ -1,5 +1,6 @@
 import type { Prisma, StockMovementType } from "@prisma/client";
 
+import { MSG } from "@/lib/messages/ja";
 import { db } from "@/lib/db";
 
 type InventoryChangeInput = {
@@ -23,7 +24,7 @@ export async function applyInventoryDelta(
 
   const nextQuantity = (existing?.quantity ?? 0) + input.delta;
   if (nextQuantity < 0) {
-    throw new Error("Insufficient inventory");
+    throw new Error(MSG.INSUFFICIENT_INVENTORY);
   }
 
   return tx.inventory.upsert({

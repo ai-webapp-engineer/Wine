@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatErrorMessage, MSG } from "@/lib/messages/ja";
 
 type ScanResult = {
   janCode: string;
@@ -41,9 +42,7 @@ export function JanScanner({ onSubmit, mode = "inbound" }: JanScannerProps) {
         navigator.vibrate(50);
       }
     } catch (submitError) {
-      setError(
-        submitError instanceof Error ? submitError.message : "登録に失敗しました",
-      );
+      setError(formatErrorMessage(submitError, MSG.REGISTER_FAILED));
     } finally {
       setLoading(false);
     }
@@ -72,7 +71,7 @@ export function JanScanner({ onSubmit, mode = "inbound" }: JanScannerProps) {
           />
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" loading={loading}>
           {loading ? "処理中..." : mode === "inbound" ? "入庫登録" : "出庫登録"}
         </Button>
       </form>

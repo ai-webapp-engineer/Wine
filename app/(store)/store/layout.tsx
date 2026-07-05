@@ -2,13 +2,14 @@ import { AppHeader, BottomNav, PageShell, SidebarNav } from "@/components/layout
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireRoleLayout } from "@/lib/auth/layout-guard";
+import { APP_MAIN_CLASS, APP_SCREEN_CLASS, APP_SHELL_CLASS } from "@/lib/layout";
 import { db } from "@/lib/db";
 
 const navItems = [
-  { href: "/store", label: "ダッシュボード" },
-  { href: "/store/inventory", label: "在庫" },
-  { href: "/store/orders", label: "発注" },
-  { href: "/store/receiving", label: "入荷" },
+  { href: "/store", label: "ダッシュボード", icon: "dashboard" as const },
+  { href: "/store/inventory", label: "在庫", icon: "inventory" as const },
+  { href: "/store/orders", label: "発注", icon: "orders" as const },
+  { href: "/store/receiving", label: "入荷", icon: "receiving" as const },
 ];
 
 export default async function StoreLayout({
@@ -19,11 +20,11 @@ export default async function StoreLayout({
   const user = await requireRoleLayout("/store");
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className={APP_SCREEN_CLASS}>
       <AppHeader user={user} />
-      <div className="mx-auto flex min-h-[calc(100vh-57px)] max-w-7xl">
+      <div className={APP_SHELL_CLASS}>
         <SidebarNav items={navItems} />
-        <main className="flex-1 p-4 pb-24 md:p-6">{children}</main>
+        <main className={APP_MAIN_CLASS}>{children}</main>
       </div>
       <BottomNav items={navItems} />
     </div>

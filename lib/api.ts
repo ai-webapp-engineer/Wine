@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { formatErrorMessage, formatHttpStatusFromMessage, MSG } from "@/lib/messages/ja";
+
 export function jsonOk<T>(data: T, init?: ResponseInit) {
   return NextResponse.json(data, init);
 }
@@ -9,20 +11,7 @@ export function jsonError(message: string, status = 400) {
 }
 
 export function handleApiError(error: unknown) {
-  if (error instanceof Error) {
-    if (error.message === "Unauthorized") {
-      return jsonError("Unauthorized", 401);
-    }
-    if (error.message === "Forbidden") {
-      return jsonError("Forbidden", 403);
-    }
-    if (error.message === "Location required") {
-      return jsonError("Location required", 400);
-    }
-    if (error.message === "Insufficient inventory") {
-      return jsonError("Insufficient inventory", 409);
-    }
-    return jsonError(error.message, 400);
-  }
-  return jsonError("Internal server error", 500);
+  const message = formatErrorMessage(error, MSG.INTERNAL_ERROR);
+  const status = error instanceof Error ? formatHttpStatusFromMessage(message) : 500;
+  return jsonError(message, status);
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MSG } from "@/lib/messages/ja";
 
 export function UserForm({
   locations,
@@ -19,14 +20,28 @@ export function UserForm({
     role: "STORE_STAFF",
     locationId: locations[0]?.id ?? "",
   });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    await fetch("/api/users", {
+    setError(null);
+    setLoading(true);
+
+    const response = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
+
+    if (!response.ok) {
+      const data = await response.json();
+      setError(data.error ?? MSG.REGISTER_FAILED);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
     router.refresh();
   }
 
@@ -64,7 +79,10 @@ export function UserForm({
         <option value="HQ_STAFF">本部スタッフ</option>
         <option value="HQ_ADMIN">本部管理者</option>
       </select>
-      <Button type="submit">ユーザー追加</Button>
+      <Button type="submit" loading={loading}>
+        ユーザー追加
+      </Button>
+      {error ? <p className="text-sm text-red-600 md:col-span-5">{error}</p> : null}
     </form>
   );
 }

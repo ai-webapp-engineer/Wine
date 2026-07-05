@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wine Management System",
+  title: "ワイン管理システム",
   description: "次世代ワイン管理システム",
 };
 

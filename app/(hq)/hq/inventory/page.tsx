@@ -1,36 +1,48 @@
 import { PageShell } from "@/app/(hq)/hq/layout";
-import { db } from "@/lib/db";
+import { DataTable } from "@/components/ui/data-table";
+import { parseTableParams, type TableSearchParams } from "@/lib/pagination";
+import { fetchActiveLocations, fetchHqInventoryTable } from "@/lib/services/table-queries";
 
-export default async function HqInventoryPage() {
-  const inventory = await db.inventory.findMany({
-    include: { product: true, location: true },
-    orderBy: [{ location: { code: "asc" } }, { product: { name: "asc" } }],
-  });
+type Props = {
+  searchParams: Promise<TableSearchParams>;
+};
+
+export default async function HqInventoryPage({ searchParams }: Props) {
+  const params = parseTableParams(await searchParams);
+  const [table, locations] = await Promise.all([
+    fetchHqInventoryTable(params),
+    fetchActiveLocations(),
+  ]);
 
   return (
     <PageShell title="全拠点在庫" description="店舗・倉庫横断の在庫一覧">
-      <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-stone-50 text-left text-stone-600">
-            <tr>
-              <th className="px-4 py-3">拠点</th>
-              <th className="px-4 py-3">商品名</th>
-              <th className="px-4 py-3">JAN</th>
-              <th className="px-4 py-3">在庫</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inventory.map((item) => (
-              <tr key={item.id} className="border-t border-stone-100">
-                <td className="px-4 py-3">{item.location.name}</td>
-                <td className="px-4 py-3">{item.product.name}</td>
-                <td className="px-4 py-3 font-mono text-xs">{item.product.janCode}</td>
-                <td className="px-4 py-3">{item.quantity}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        basePath="/hq/inventory"
+        q={params.q}
+        filter={params.filter}
+        filterLabel="拠点"
+        filterOptions={locations.map((location) => ({
+          value: location.id,
+          label: location.name,
+        }))}
+        searchPlaceholder="拠点・商品名・JANで検索"
+        page={table.currentPage}
+        totalPages={table.totalPages}
+        total={table.total}
+        pageSize={params.pageSize}
+        rows={table.rows}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "location", header: "拠点", cell: (row) => row.location.name },
+          { key: "product", header: "商品名", cell: (row) => row.product.name },
+          {
+            key: "jan",
+            header: "JAN",
+            cell: (row) => <span className="font-mono text-xs">{row.product.janCode}</span>,
+          },
+          { key: "quantity", header: "在庫", cell: (row) => row.quantity },
+        ]}
+      />
     </PageShell>
   );
 }

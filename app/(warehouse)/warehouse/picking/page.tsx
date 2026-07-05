@@ -1,10 +1,11 @@
 import { PageShell } from "@/app/(warehouse)/warehouse/layout";
 import { WarehousePickingClient } from "@/components/warehouse/picking-client";
-import { auth } from "@/lib/auth";
+import { requireSessionUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
 export default async function WarehousePickingPage() {
-  const locationId = (await auth())!.user.locationId!;
+  const user = await requireSessionUser();
+  const locationId = user.locationId!;
 
   const orders = await db.order.findMany({
     where: {

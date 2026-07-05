@@ -1,10 +1,11 @@
 import { PageShell } from "@/app/(store)/store/layout";
 import { ReceivingClient } from "@/components/store/receiving-client";
-import { auth } from "@/lib/auth";
+import { requireSessionUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
 export default async function StoreReceivingPage() {
-  const locationId = (await auth())!.user.locationId!;
+  const user = await requireSessionUser();
+  const locationId = user.locationId!;
 
   const orders = await db.order.findMany({
     where: {

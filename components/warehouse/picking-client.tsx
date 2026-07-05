@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { updateOrderStatusAction } from "@/lib/actions/orders";
+import { submitOutboundAction } from "@/lib/actions/stock";
 import { JanScanner } from "@/components/scanner/jan-scanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,30 +27,23 @@ export function WarehousePickingClient({ orders }: { orders: PickingOrder[] }) {
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?.id ?? "");
 
   async function handleOutbound(payload: { janCode: string; quantity: number }) {
-    const response = await fetch("/api/stock/outbound", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...payload,
-        orderId: selectedOrderId || undefined,
-      }),
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error ?? "出庫に失敗しました");
+    const result = await submitOutboundAction(
+      payload.janCode,
+      payload.quantity,
+      selectedOrderId || undefined,
+    );
+    if (!result.ok) {
+      throw new Error(result.error);
     }
-
     router.refresh();
   }
 
   async function updateStatus(status: "PICKING" | "SHIPPED") {
     if (!selectedOrderId) return;
-    await fetch(`/api/orders/${selectedOrderId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+    const result = await updateOrderStatusAction(selectedOrderId, status);
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
     router.refresh();
   }
 

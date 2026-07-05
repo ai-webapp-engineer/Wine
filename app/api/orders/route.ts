@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
 
-import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { handleApiError, jsonOk } from "@/lib/api";
 import { requireRole, requireSessionUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { generateOrderNo } from "@/lib/services/inventory";
-import { orderCreateSchema } from "@/lib/validators";
+import { executeCreateOrder } from "@/lib/services/order-operations";
 
 export async function GET() {
   try {
@@ -23,6 +22,7 @@ export async function GET() {
         toLocation: true,
       },
       orderBy: { createdAt: "desc" },
+      take: 50,
     });
 
     return jsonOk(orders);
@@ -34,28 +34,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireRole(["STORE_STAFF", "STORE_MANAGER"]);
-    if (!user.locationId) {
-      return jsonError("Store location required", 400);
-    }
-
-    const body = orderCreateSchema.parse(await request.json());
-
-    const order = await db.order.create({
-      data: {
-        orderNo: generateOrderNo(),
-        fromLocationId: user.locationId,
-        toLocationId: body.toLocationId,
-        status: "SUBMITTED",
-        requestedById: user.id,
-        items: {
-          create: body.items,
-        },
-      },
-      include: {
-        items: { include: { product: true } },
-      },
-    });
-
+    const body = await request.json();
+    const order = await executeCreateOrder(user, body);
     return jsonOk(order, { status: 201 });
   } catch (error) {
     return handleApiError(error);
